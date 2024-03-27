@@ -28,8 +28,7 @@ async fn main() -> std::io::Result<()> {
                 .wrap(Logger::new("(%Ts, %s) %a: %r").log_target("v1::logger")),
         )
     })
-    .bind(("0.0.0.0", 8080))
-    .unwrap()
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }
