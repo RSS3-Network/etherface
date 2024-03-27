@@ -63,8 +63,8 @@ jobs:
       images: rss3/etherface
       tag: ${{ github.sha }}
       cluster: prod
-      namespace: guardian
-      releaseName: daedalus
-      revision: main
-      dir: deploy/dev
+      namespace: network
+      releaseName: etherface
+      revision: master
+      dir: deploy/prod
     secrets: inherit
