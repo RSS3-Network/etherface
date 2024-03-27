@@ -1,5 +1,5 @@
 //! Config manager, reading the content of the `.env` file.
-//! 
+//!
 //! Reads all content from `.env` into [`Config`] for all sub-modules to use.
 
 use crate::error::Error;
@@ -39,10 +39,10 @@ fn read_and_return_env_var(env_var: &'static str) -> Result<String, Error> {
 impl Config {
     /// Returns a new config manager, reading the content of `.env`.
     pub fn new() -> Result<Self, Error> {
-        match Path::new(".env").exists() {
-            true => dotenv()?,
-            false => dotenv::from_filename("../.env")?, // If executed within a sub-directory
-        };
+        // match Path::new(".env").exists() {
+        //     true => dotenv()?,
+        //     false => dotenv::from_filename("../.env")?, // If executed within a sub-directory
+        // };
 
         let database_url = read_and_return_env_var(ENV_VAR_DATABASE_URL)?;
         let token_etherscan = read_and_return_env_var(ENV_VAR_TOKEN_ETHERSCAN)?;
