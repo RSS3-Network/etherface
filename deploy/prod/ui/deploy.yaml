@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etherface-ui
+  labels:
+    app: etherface
+    component: ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etherface
+      component: ui
+  template:
+    metadata:
+      labels:
+        app: etherface
+        component: ui
+    spec:
+      containers:
+        - name: ui
+          image: rss3/etherface-ui
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "0.1"
+              memory: "128Mi"
+            limits:
+              cpu: "0.5"
+              memory: "512Mi"

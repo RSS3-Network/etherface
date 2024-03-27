@@ -5,3 +5,8 @@ resources:
   - ui
   - rest
   - etherface
+
+images:
+  - name: rss3/etherface-ui
+    newName: rss3/etherface-ui
+    newTag: 4f575741d89ef20df9808419e5c828dc2b4e8954
