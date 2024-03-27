@@ -1,0 +1,16 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: etherface-cors
+spec:
+  headers:
+    accessControlAllowHeaders:
+      - "*"
+    accessControlAllowMethods:
+      - GET
+      - OPTIONS
+      - PUT
+    accessControlAllowOriginList:
+      - "https://etherface.rss3.io"
+    accessControlMaxAge: 100
+    addVaryHeader: true

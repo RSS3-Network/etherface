@@ -8,6 +8,8 @@ spec:
   routes:
     - match: Host(`api.etherface.rss3.io`)
       kind: Rule
+      middlewares:
+        - name: etherface-cors
       services:
         - name: etherface-rest
           port: 80
