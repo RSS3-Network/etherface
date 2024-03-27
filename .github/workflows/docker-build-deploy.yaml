@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - deploy/**
 
 env:
   GIT_COMMIT: ${{ github.sha }}
@@ -52,3 +54,17 @@ jobs:
           targets: ${{ matrix.target }}
           push: true
           files: docker-bake.hcl
+
+  deploy-prod:
+    uses: NaturalSelectionLabs/Daedalus/.github/workflows/deploy-v3-tpl.yaml@main
+    needs:
+      - build
+    with:
+      images: rss3/etherface
+      tag: ${{ github.sha }}
+      cluster: prod
+      namespace: guardian
+      releaseName: daedalus
+      revision: main
+      dir: deploy/dev
+    secrets: inherit
