@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - deploy.yaml
   - svc.yaml
+  - route.yaml

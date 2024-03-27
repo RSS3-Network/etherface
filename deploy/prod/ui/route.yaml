@@ -1,0 +1,13 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: etherface-ui
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`etherface.rss3.io`)
+      kind: Rule
+      services:
+        - name: etherface-ui
+          port: 80
