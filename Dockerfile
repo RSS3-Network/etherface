@@ -9,5 +9,6 @@ COPY . .
 RUN cargo build --release
 
 FROM debian:bullseye-slim
+WORKDIR /etherface
 RUN apt update && apt install -y libpq5
 COPY --from=builder /usr/src/etherface/target/release/etherface* /usr/local/bin/

@@ -27,7 +27,7 @@ spec:
           command: ["etherface"]
           volumeMounts:
             - name: etherface
-              mountPath: /
+              mountPath: /etherface
               subPath: .env
           resources:
             requests:
