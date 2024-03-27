@@ -21,6 +21,9 @@ spec:
         - name: etherface
           image: rss3/etherface
           command: ["etherface-rest"]
+          ports:
+            - containerPort: 8080
+              name: http
           envFrom:
             - secretRef:
                 name: etherface
