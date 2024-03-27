@@ -29,7 +29,7 @@ spec:
             limits:
               cpu: "0.5"
               memory: "512Mi"
-          liveProbe:
+          livenessProbe:
             httpGet:
               path: /
               port: 3000

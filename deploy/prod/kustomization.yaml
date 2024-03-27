@@ -9,4 +9,7 @@ resources:
 images:
   - name: rss3/etherface-ui
     newName: rss3/etherface-ui
-    newTag: 4f575741d89ef20df9808419e5c828dc2b4e8954
+    newTag: 9396d529b8ead6e37e5994e341cbcfb825e942a3
+  - name: rss3/etherface
+    newName: rss3/etherface
+    newTag: 9396d529b8ead6e37e5994e341cbcfb825e942a3
