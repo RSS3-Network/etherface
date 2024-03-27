@@ -3,3 +3,4 @@ Cargo.lock
 etherface.log
 .DS_Store
 .env
+/signature-dump
