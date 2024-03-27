@@ -5,6 +5,7 @@ resources:
   - ui
   - rest
   - etherface
+  - cert.yaml
 
 images:
   - name: rss3/etherface-ui

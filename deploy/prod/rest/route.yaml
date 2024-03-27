@@ -13,3 +13,5 @@ spec:
       services:
         - name: etherface-rest
           port: 80
+  tls:
+    secretName: etherface-cert

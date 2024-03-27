@@ -11,3 +11,5 @@ spec:
       services:
         - name: etherface-ui
           port: 80
+  tls:
+    secretName: etherface-cert
