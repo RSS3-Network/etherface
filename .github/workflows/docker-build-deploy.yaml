@@ -67,4 +67,5 @@ jobs:
       releaseName: etherface
       revision: master
       dir: deploy/prod
-    secrets: inherit
+    secrets:
+      ARGOCD_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
