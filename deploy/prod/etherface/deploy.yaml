@@ -17,10 +17,18 @@ spec:
         app: etherface
         component: etherface
     spec:
+      volumes:
+        - name: etherface
+          secret:
+            secretName: etherface
       containers:
         - name: etherface
           image: rss3/etherface
           command: ["etherface"]
+          volumeMounts:
+            - name: etherface
+              mountPath: /
+              subPath: .env
           resources:
             requests:
               cpu: "0.1"

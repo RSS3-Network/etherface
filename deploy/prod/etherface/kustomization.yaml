@@ -3,3 +3,11 @@ kind: Kustomization
 
 resources:
   - deploy.yaml
+
+secretGenerator:
+  - name: etherface
+    files:
+      - .env
+
+commonAnnotations:
+  avp.kubernetes.io/path: "kv/data/network/etherface"
