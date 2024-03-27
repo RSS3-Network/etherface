@@ -18,13 +18,11 @@ const PATH_CERTIFICATE: &str = "/etc/letsencrypt/live/api.etherface.io/fullchain
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    builder.set_private_key_file(PATH_PRIVATE_KEY, SslFiletype::PEM).unwrap();
-    builder.set_certificate_chain_file(PATH_CERTIFICATE).unwrap();
-
     let state = web::Data::new(AppState {
         dbc: DatabaseClientPooled::new().unwrap(),
     });
+
+    let addrs = "0.0.0.0:8080";
 
     HttpServer::new(move || {
         App::new().app_data(state.clone()).service(
@@ -38,7 +36,8 @@ async fn main() -> std::io::Result<()> {
                 .wrap(Logger::new("(%Ts, %s) %a: %r").log_target("v1::logger")),
         )
     })
-    .bind_openssl("65.21.54.11:443", builder)?
+    .bind(addrs)
+    .unwrap()
     .run()
     .await
 }
