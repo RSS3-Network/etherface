@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etherface
+  labels:
+    app: etherface
+    component: etherface
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etherface
+      component: etherface
+  template:
+    metadata:
+      labels:
+        app: etherface
+        component: etherface
+    spec:
+      containers:
+        - name: etherface
+          image: rss3/etherface
+          command: ["etherface"]
+          resources:
+            requests:
+              cpu: "0.1"
+              memory: "128Mi"
+            limits:
+              cpu: "0.5"
+              memory: "512Mi"
