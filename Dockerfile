@@ -10,5 +10,5 @@ RUN cargo build --release
 
 FROM debian:bullseye-slim
 WORKDIR /etherface
-RUN apt update && apt install -y libpq5 libssl1.1 openssl
+RUN apt update && apt install -y libpq5 libssl1.1 openssl ca-certificates
 COPY --from=builder /usr/src/etherface/target/release/etherface* /usr/local/bin/
