@@ -6,10 +6,8 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`api.etherface.rss3.io`)
+    - match: Host(`etherface.rss3.io`) && PathPrefix(`/v1`)
       kind: Rule
-      middlewares:
-        - name: etherface-cors
       services:
         - name: etherface-rest
           port: 80

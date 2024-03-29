@@ -18,9 +18,9 @@ CREATE MATERIALIZED VIEW view_signature_count_statistics AS
 				AS signature_count_etherscan,
 			(SELECT COUNT(DISTINCT signature_id) AS signature_count_fourbyte FROM mapping_signature_fourbyte) 
 				AS signature_count_fourbyte,
-			(SELECT AVG(added_at_count)::BIGINT FROM (SELECT date_trunc('day', added_at), COUNT(*) AS added_at_count FROM signature WHERE added_at > CURRENT_DATE - 7 GROUP BY 1) AS temp)
+			COALESCE((SELECT AVG(added_at_count)::BIGINT FROM (SELECT date_trunc('day', added_at), COUNT(*) AS added_at_count FROM signature WHERE added_at > CURRENT_DATE - 7 GROUP BY 1) AS temp),0)
 				AS average_daily_signature_insert_rate_last_week,
-			(SELECT AVG(added_at_count)::BIGINT FROM (SELECT date_trunc('day', added_at), COUNT(*) AS added_at_count FROM signature WHERE added_at < CURRENT_DATE - 7 AND added_at > CURRENT_DATE - 14 GROUP BY 1) AS temp)
+			COALESCE((SELECT AVG(added_at_count)::BIGINT FROM (SELECT date_trunc('day', added_at), COUNT(*) AS added_at_count FROM signature WHERE added_at < CURRENT_DATE - 7 AND added_at > CURRENT_DATE - 14 GROUP BY 1) AS temp),0)
 				AS average_daily_signature_insert_rate_week_before_last;
 
 
