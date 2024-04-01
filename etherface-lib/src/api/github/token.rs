@@ -12,7 +12,6 @@ use crate::api::github::GITHUB_RATELIMIT_URL;
 use crate::api::vault::VaultManager;
 use crate::api::RequestHandler;
 use crate::api::TokenManagerResponseHandler;
-use crate::config::Config;
 use crate::error::Error;
 use log::info;
 use log::warn;
