@@ -1,10 +1,9 @@
 use crate::config::Config;
 use derive_builder::Builder;
-use futures::executor::block_on;
-use log::debug;
 use rustify_derive::Endpoint;
 use serde::Deserialize;
 use std::{collections::HashMap, error::Error, fs::read_to_string, result::Result};
+use tokio;
 use vaultrs::{
     api,
     auth::kubernetes::login,
@@ -61,7 +60,8 @@ pub(crate) struct VaultManager {
 
 impl VaultManager {
     /// Returns a new token manager.
-    pub fn new() -> Result<Self, Box<dyn Error>> {
+    #[tokio::main]
+    pub async fn new() -> Result<Self, Box<dyn Error>> {
         let vault_config = Config::new()?.vault;
 
         let mut client =
@@ -70,8 +70,7 @@ impl VaultManager {
         match vault_config.auth.method.as_str() {
             "kubernetes" => {
                 let jwt = read_to_string(SERVICE_ACCOUNT_TOKEN_PATH)?;
-                let auth = block_on(login(&client, &vault_config.auth.path, &vault_config.auth.role, &jwt))?;
-                debug!("Authenticated to Vault with Kubernetes auth method {:?}", auth);
+                let auth = login(&client, &vault_config.auth.path, &vault_config.auth.role, &jwt).await?;
                 client.set_token(&auth.client_token);
             }
             "token" => match vault_config.auth.token {
@@ -97,15 +96,15 @@ impl VaultManager {
 
         Ok(manager)
     }
-
-    pub fn get_token(&mut self) -> Result<String, Box<dyn Error>> {
+    #[tokio::main]
+    pub async fn get_token(&mut self) -> Result<String, Box<dyn Error>> {
         // if token is expired or not exist, renew it
         if let Some(token) = &self.token {
             if token.data.expires_at < chrono::Utc::now().to_rfc3339() {
-                block_on(self.renew_token())?
+                self.renew_token().await?;
             }
         } else {
-            block_on(self.renew_token())?
+            self.renew_token().await?;
         }
 
         return match &self.token {

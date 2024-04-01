@@ -58,7 +58,6 @@ pub struct VaultSecret {
 
 const ENV_VAR_DATABASE_URL: &str = "ETHERFACE_DATABASE_URL";
 const ENV_VAR_TOKEN_ETHERSCAN: &str = "ETHERFACE_TOKEN_ETHERSCAN";
-const ENV_VAR_TOKENS_GITHUB: &str = "ETHERFACE_TOKENS_GITHUB";
 const ENV_VAR_REST_ADDRESS: &str = "ETHERFACE_REST_ADDRESS";
 
 const ENV_VAR_VAULT_ADDR: &str = "VAULT_ADDR";
@@ -93,16 +92,6 @@ impl Config {
         let token_etherscan = read_and_return_env_var(ENV_VAR_TOKEN_ETHERSCAN)?;
         let rest_address = read_and_return_env_var(ENV_VAR_REST_ADDRESS)?;
 
-        let tokens_github = std::env::var(ENV_VAR_TOKENS_GITHUB)
-            .map_err(|err| Error::ConfigReadNonExistantEnvironmentVariable(ENV_VAR_TOKENS_GITHUB, err))?
-            .split(',')
-            .map(str::to_string)
-            .collect::<Vec<String>>();
-
-        // if tokens_github.is_empty() {
-        //     return Err(Error::ConfigReadEmptyEnvironmentVariable(ENV_VAR_TOKENS_GITHUB));
-        // }
-
         let vault = VaultConfig {
             address: read_and_return_env_var(ENV_VAR_VAULT_ADDR)
                 .unwrap_or("http://127.0.0.1:8200".to_string()),
@@ -111,7 +100,10 @@ impl Config {
                     .unwrap_or("kubernetes".to_string()),
                 path: read_and_return_env_var(ENV_VAR_VAULT_AUTH_PATH).unwrap_or("kubernetes".to_string()),
                 role: read_and_return_env_var(ENV_VAR_VAULT_AUTH_ROLE).unwrap_or("etherface".to_string()),
-                token: None,
+                token: match read_and_return_env_var(ENV_VAR_VAULT_AUTH_TOKEN) {
+                    Ok(token) => Some(token),
+                    Err(_) => None,
+                },
             },
             secret: VaultSecret {
                 mount: read_and_return_env_var(ENV_VAR_VAULT_SECRET_MOUNT).unwrap_or("etherface".to_string()),

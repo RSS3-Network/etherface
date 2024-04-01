@@ -39,7 +39,6 @@ struct Ratelimit {
 
 pub(crate) struct TokenManager {
     pub active: String,
-    pool: Vec<String>,
     request_handler: Box<RequestHandler>,
     vault_manager: VaultManager,
 }
@@ -49,9 +48,8 @@ impl TokenManager {
     pub fn new() -> Result<Self, Error> {
         let tokens = Config::new()?.tokens_github;
 
-        let mut manager = TokenManager {
-            active: tokens[0].clone(),
-            pool: tokens,
+        let manager = TokenManager {
+            active: "".to_string(),
             request_handler: Box::new(RequestHandler::new()),
             vault_manager: match VaultManager::new() {
                 Ok(vault_manager) => vault_manager,
@@ -61,7 +59,7 @@ impl TokenManager {
                 }
             },
         };
-        manager.cleanup()?; // Make sure we have only valid tokens before returning the TokenManager
+        // manager.cleanup()?; // Make sure we have only valid tokens before returning the TokenManager
 
         Ok(manager)
     }
@@ -84,71 +82,29 @@ impl TokenManager {
             }
         }
 
-        let mut valid_tokens: Vec<(&str, usize)> = Vec::new();
-        for token in &self.pool {
-            if let Ok(ratelimit) = self.execute(token) {
-                valid_tokens.push((token, ratelimit.core.remaining));
-            }
-        }
-
-        let dynamic_token = match self.vault_manager.get_token() {
+        self.active = match self.vault_manager.get_token() {
             Ok(token) => token,
             Err(e) => {
                 warn!("Failed to get token from vault: {}", e);
                 return Err(Error::VaultConfigError);
             }
         };
-        if let Ok(ratelimit) = self.execute(&dynamic_token) {
-            valid_tokens.push((&dynamic_token, ratelimit.core.remaining));
-        }
-
-        if valid_tokens.is_empty() {
-            return Err(Error::GithubTokenPoolEmpty);
-        }
-
-        let mut best = &valid_tokens[0];
-        for token in &valid_tokens {
-            if token.1 > best.1 {
-                best = token;
-            }
-        }
-
-        match best.1 {
-            0 => {
-                info!("All github tokens drained, sleeping {SLEEP_DURATION_TOKENS_DRAINED} seconds");
-                std::thread::sleep(std::time::Duration::from_secs(SLEEP_DURATION_TOKENS_DRAINED));
-            }
-            _ => {
-                info!("Replacing activen github token {} with {}", self.active, best.0);
-                self.active = best.0.to_string();
-            }
-        }
 
         Ok(())
     }
 
     /// Finds and removes all invalid tokens from the token pool.
     pub fn cleanup(&mut self) -> Result<(), Error> {
-        let mut invalid_tokens: Vec<String> = Vec::new();
-        for token in &self.pool {
-            // if let Err(Error::GithubTokenInvalid(token)) = self.execute(token) {
-            if let Err(Error::GithubTokenInvalid) = self.execute(token) {
-                invalid_tokens.push(token.to_string());
+        let token = match self.vault_manager.get_token() {
+            Ok(token) => token,
+            Err(e) => {
+                warn!("Failed to get token from vault: {}", e);
+                return Err(Error::VaultConfigError);
             }
-        }
-
-        if invalid_tokens.len() == self.pool.len() {
-            return Err(Error::GithubTokenPoolEmpty);
-        }
-
-        for token in invalid_tokens {
-            warn!("Removing expired / invalid github token {}", token);
-            self.pool.retain(|x| *x != token);
-        }
-
+        };
         // Replace the activen token in case it _might_ have been removed from the pool
-        info!("Replacing active github token {} with {}", self.active, self.pool[0]);
-        self.active = self.pool[0].to_string();
+        info!("Replacing active github token {} with {}", self.active, token);
+        self.active = token;
         Ok(())
     }
 
