@@ -1,6 +1,7 @@
 use crate::config::Config;
 use derive_builder::Builder;
 use futures::executor::block_on;
+use log::debug;
 use rustify_derive::Endpoint;
 use serde::Deserialize;
 use std::{collections::HashMap, error::Error, fs::read_to_string, result::Result};
@@ -70,6 +71,7 @@ impl VaultManager {
             "kubernetes" => {
                 let jwt = read_to_string(SERVICE_ACCOUNT_TOKEN_PATH)?;
                 let auth = block_on(login(&client, &vault_config.auth.path, &vault_config.auth.role, &jwt))?;
+                debug!("Authenticated to Vault with Kubernetes auth method {:?}", auth);
                 client.set_token(&auth.client_token);
             }
             "token" => match vault_config.auth.token {
@@ -85,7 +87,7 @@ impl VaultManager {
             }
         }
 
-        let mut manager = VaultManager {
+        let manager = VaultManager {
             client,
             mount: vault_config.secret.mount,
             path: vault_config.secret.path,

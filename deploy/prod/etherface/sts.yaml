@@ -1,12 +1,12 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: etherface
   labels:
     app: etherface
     component: etherface
 spec:
-  replicas: 1
+  serviceName: "etherface"
   selector:
     matchLabels:
       app: etherface
