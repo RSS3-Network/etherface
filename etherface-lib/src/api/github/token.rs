@@ -46,8 +46,6 @@ pub(crate) struct TokenManager {
 impl TokenManager {
     /// Returns a new token manager.
     pub fn new() -> Result<Self, Error> {
-        let tokens = Config::new()?.tokens_github;
-
         let manager = TokenManager {
             active: "".to_string(),
             request_handler: Box::new(RequestHandler::new()),

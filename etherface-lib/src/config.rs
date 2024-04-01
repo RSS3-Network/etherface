@@ -11,9 +11,6 @@ pub struct Config {
     /// Etherscan API token.
     pub token_etherscan: String,
 
-    /// GitHub API tokens.
-    pub tokens_github: Vec<String>,
-
     /// Etherface REST API address, e.g. <https://api.etherface.io>
     pub rest_address: String,
 
@@ -115,7 +112,6 @@ impl Config {
 
         Ok(Config {
             database_url,
-            tokens_github,
             token_etherscan,
             rest_address,
             vault,
