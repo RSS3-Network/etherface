@@ -104,7 +104,8 @@ impl Config {
         // }
 
         let vault = VaultConfig {
-            address: read_and_return_env_var(ENV_VAR_VAULT_ADDR)?,
+            address: read_and_return_env_var(ENV_VAR_VAULT_ADDR)
+                .unwrap_or("http://127.0.0.1:8200".to_string()),
             auth: VaultAuth {
                 method: read_and_return_env_var(ENV_VAR_VAULT_AUTH_METHOD)
                     .unwrap_or("kubernetes".to_string()),
