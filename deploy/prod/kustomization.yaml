@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - rest
   - etherface
+  - serviceaccount.yaml
 
 images:
   - name: rss3/etherface

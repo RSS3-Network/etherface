@@ -6,7 +6,8 @@ metadata:
     app: etherface
     component: etherface
 spec:
-  replicas: 1
+  replicas: 0
+
   selector:
     matchLabels:
       app: etherface
@@ -17,17 +18,19 @@ spec:
         app: etherface
         component: etherface
     spec:
+      serviceAccountName: etherface
       containers:
         - name: etherface
           image: rss3/etherface
+          imagePullPolicy: IfNotPresent
           command: ["etherface"]
           envFrom:
             - secretRef:
                 name: etherface
           resources:
             requests:
-              cpu: "0.1"
+              cpu: "100m"
               memory: "128Mi"
             limits:
-              cpu: "0.5"
+              cpu: "500m"
               memory: "512Mi"
