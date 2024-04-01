@@ -53,4 +53,7 @@ pub enum Error {
 
     #[error("Aborting crawling process, one or more background events disconnected from channel")]
     CrawlerChannelDisconnected,
+
+    #[error("Vault config error")]
+    VaultConfigError,
 }

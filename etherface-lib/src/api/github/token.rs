@@ -1,14 +1,15 @@
 //! GitHub API token manager.
-//! 
-//! Because GitHub has a ratelimit of 5000 requests / hour, which for crawling purposes is very little, 
+//!
+//! Because GitHub has a ratelimit of 5000 requests / hour, which for crawling purposes is very little,
 //! Etherface uses multiple GitHub API tokens. For that some logic reagarding which token should be actively
 //! used is needed, which this module does. In basic terms all tokens are read from the config file and stored
 //! in an internal token pool. Initially the first token in the token pool will be used for all GitHub API
-//! requests. If, however, the active token is drained, i.e. all 5000 requests / hour have been reached, the 
+//! requests. If, however, the active token is drained, i.e. all 5000 requests / hour have been reached, the
 //! token manager will automatically find a new token in the pool to temporarily replace the old active token
 //! (see the [`refresh`] function). As such the GitHub API client doesn't have to worry about token managment.
 
 use crate::api::github::GITHUB_RATELIMIT_URL;
+use crate::api::vault::VaultManager;
 use crate::api::RequestHandler;
 use crate::api::TokenManagerResponseHandler;
 use crate::config::Config;
@@ -40,6 +41,7 @@ pub(crate) struct TokenManager {
     pub active: String,
     pool: Vec<String>,
     request_handler: Box<RequestHandler>,
+    vault_manager: VaultManager,
 }
 
 impl TokenManager {
@@ -51,6 +53,13 @@ impl TokenManager {
             active: tokens[0].clone(),
             pool: tokens,
             request_handler: Box::new(RequestHandler::new()),
+            vault_manager: match VaultManager::new() {
+                Ok(vault_manager) => vault_manager,
+                Err(e) => {
+                    warn!("Failed to initialize VaultManager: {}", e);
+                    return Err(Error::VaultConfigError);
+                }
+            },
         };
         manager.cleanup()?; // Make sure we have only valid tokens before returning the TokenManager
 
@@ -80,6 +89,17 @@ impl TokenManager {
             if let Ok(ratelimit) = self.execute(token) {
                 valid_tokens.push((token, ratelimit.core.remaining));
             }
+        }
+
+        let dynamic_token = match self.vault_manager.get_token() {
+            Ok(token) => token,
+            Err(e) => {
+                warn!("Failed to get token from vault: {}", e);
+                return Err(Error::VaultConfigError);
+            }
+        };
+        if let Ok(ratelimit) = self.execute(&dynamic_token) {
+            valid_tokens.push((&dynamic_token, ratelimit.core.remaining));
         }
 
         if valid_tokens.is_empty() {
@@ -138,6 +158,8 @@ impl TokenManager {
             .execute_deser_token::<TokenManagerResponseHandler, RatelimitRoot>(GITHUB_RATELIMIT_URL, token)?
             .resources)
     }
+
+    // request github device code
 }
 
 #[cfg(test)]

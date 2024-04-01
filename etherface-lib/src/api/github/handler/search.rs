@@ -4,8 +4,7 @@ use crate::api::github::page::Page;
 use crate::api::github::GithubClient;
 use crate::error::Error;
 use crate::model::GithubRepository;
-use chrono::Date;
-use chrono::Utc;
+use chrono::NaiveDate;
 
 pub struct SearchHandler<'a> {
     ghc: &'a GithubClient,
@@ -23,12 +22,12 @@ impl<'a> SearchHandler<'a> {
     }
 
     /// Returns the deserialized JSON `/search/repositories?q=language:solidity created:{date}` response.
-    pub fn solidity_repos_created_at(&self, date: Date<Utc>) -> Result<Vec<GithubRepository>, Error> {
+    pub fn solidity_repos_created_at(&self, date: NaiveDate) -> Result<Vec<GithubRepository>, Error> {
         self.repos(&format!("language:solidity created:{}", date.format("%Y-%m-%d")))
     }
 
     /// Returns the deserialized JSON `/search/repositories?q=language:solidity pushed:{date}` response.
-    pub fn solidity_repos_updated_at(&self, date: Date<Utc>) -> Result<Vec<GithubRepository>, Error> {
+    pub fn solidity_repos_updated_at(&self, date: NaiveDate) -> Result<Vec<GithubRepository>, Error> {
         self.repos(&format!("language:solidity pushed:{}", date.format("%Y-%m-%d")))
     }
 }
@@ -36,6 +35,7 @@ impl<'a> SearchHandler<'a> {
 #[cfg(test)]
 mod tests {
     use crate::api::github::GithubClient;
+    use chrono::NaiveDate;
     use chrono::TimeZone;
     use chrono::Utc;
 
@@ -56,7 +56,8 @@ mod tests {
         let ghc = GithubClient::new().unwrap();
 
         // https://api.github.com/search/repositories?q=language:solidity%20created:2022-01-01&per_page=100
-        let search = ghc.search().solidity_repos_created_at(Utc.ymd(2022, 1, 1)).unwrap();
+        let search =
+            ghc.search().solidity_repos_created_at(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()).unwrap();
         assert_eq!(search.len(), 96);
     }
 
@@ -65,7 +66,8 @@ mod tests {
         let ghc = GithubClient::new().unwrap();
 
         // https://api.github.com/search/repositories?q=language:solidity%20pushed:2022-01-01&per_page=100
-        let search = ghc.search().solidity_repos_updated_at(Utc.ymd(2022, 1, 1)).unwrap();
+        let search =
+            ghc.search().solidity_repos_updated_at(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()).unwrap();
         assert_eq!(search.len(), 81);
     }
 }

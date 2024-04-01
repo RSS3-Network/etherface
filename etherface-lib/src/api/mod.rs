@@ -14,6 +14,7 @@ use std::cell::RefCell;
 pub mod etherscan;
 pub mod fourbyte;
 pub mod github;
+pub mod vault;
 
 struct RequestHandler {
     client: Client,

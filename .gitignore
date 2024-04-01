@@ -3,3 +3,6 @@ Cargo.lock
 etherface.log
 .DS_Store
 /signature-dump
+
+/.idea
+/.vscode

@@ -1,13 +1,12 @@
-use actix_web::get;
-use actix_web::web;
-use actix_web::HttpResponse;
-use actix_web::Responder;
+use actix_web::{get, web, HttpResponse, Responder};
 use etherface_lib::database::handler::DatabaseClientPooled;
-use etherface_lib::model::views::ViewSignatureCountStatistics;
-use etherface_lib::model::views::ViewSignatureInsertRate;
-use etherface_lib::model::views::ViewSignatureKindDistribution;
-use etherface_lib::model::views::ViewSignaturesPopularOnGithub;
-use etherface_lib::model::SignatureKind;
+use etherface_lib::model::{
+    views::{
+        ViewSignatureCountStatistics, ViewSignatureInsertRate, ViewSignatureKindDistribution,
+        ViewSignaturesPopularOnGithub,
+    },
+    SignatureKind,
+};
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -141,4 +140,9 @@ async fn statistics(state: web::Data<AppState>) -> impl Responder {
         })
         .unwrap(),
     )
+}
+
+#[get("/healthcheck")]
+async fn healthcheck() -> impl Responder {
+    HttpResponse::Ok()
 }

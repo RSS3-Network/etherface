@@ -11,9 +11,8 @@
 //!  <img src="https://github.com/volsa/etherface/blob/master/res/img/architecture_github_crawler.png?raw=true">
 //! </div>
 
-use chrono::Date;
 use chrono::DateTime;
-use chrono::TimeZone;
+use chrono::NaiveDate;
 use chrono::Utc;
 use etherface_lib::api::github::GithubClient;
 use etherface_lib::database::handler::DatabaseClient;
@@ -81,15 +80,26 @@ impl GithubCrawler {
         // Check if this is the first ever run and if so fetch all Solidity repositories created between 2015
         // and today's date.
         if self.dbc.github_repository().get_total_count() == 0 {
-            for repo in self.search_solidity_repositories_starting_from(Utc.ymd(2015, 1, 1), true)? {
+            for repo in self.search_solidity_repositories_starting_from(
+                NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(),
+                true,
+            )? {
                 self.insert_repository_if_not_exists(&repo, false)?;
             }
         }
 
         let (tx, rx): (Sender<ChannelMessage>, Receiver<ChannelMessage>) = mpsc::channel();
-        start_background_event(tx.clone(), Event::SearchRepositories, chrono::Duration::days(1))?;
-        start_background_event(tx.clone(), Event::CheckRepositories, chrono::Duration::days(21))?;
-        start_background_event(tx, Event::CheckUsers, chrono::Duration::days(21))?;
+        start_background_event(
+            tx.clone(),
+            Event::SearchRepositories,
+            chrono::Duration::try_days(1).unwrap(),
+        )?;
+        start_background_event(
+            tx.clone(),
+            Event::CheckRepositories,
+            chrono::Duration::try_days(21).unwrap(),
+        )?;
+        start_background_event(tx, Event::CheckUsers, chrono::Duration::try_days(21).unwrap())?;
 
         // Sleep a few seconds to give the background event schedulers some time to fetch data from the
         // database and issue events if possible
@@ -100,7 +110,8 @@ impl GithubCrawler {
                 Ok(msg) => match msg.event {
                     Event::SearchRepositories => {
                         debug!("Starting SearchRepositories event");
-                        let prev_event_date = self.dbc.github_crawler_metadata().get().last_repository_search.date();
+                        let prev_event_date =
+                            self.dbc.github_crawler_metadata().get().last_repository_search.date_naive();
 
                         debug!("Prev event date: {prev_event_date}");
                         self.insert_recently_created_solidity_repositories(prev_event_date)?;
@@ -108,8 +119,13 @@ impl GithubCrawler {
 
                         // Only set if previous function calls were successful
                         debug!("Prev event date: {}", msg.new_event_date);
-                        self.dbc.github_crawler_metadata().update_last_repository_search_date(msg.new_event_date);
-                        debug!("{}", self.dbc.github_crawler_metadata().get().last_repository_search.date());
+                        self.dbc
+                            .github_crawler_metadata()
+                            .update_last_repository_search_date(msg.new_event_date);
+                        debug!(
+                            "{}",
+                            self.dbc.github_crawler_metadata().get().last_repository_search.date_naive()
+                        );
                     }
 
                     Event::CheckRepositories => {
@@ -117,7 +133,9 @@ impl GithubCrawler {
                         self.find_repository_updates(180)?;
 
                         // Only set if previous function calls were successful
-                        self.dbc.github_crawler_metadata().update_last_repository_check_date(msg.new_event_date);
+                        self.dbc
+                            .github_crawler_metadata()
+                            .update_last_repository_check_date(msg.new_event_date);
                     }
 
                     Event::CheckUsers => {
@@ -251,7 +269,7 @@ impl GithubCrawler {
         // spend further API calls to check what their languages / Solidity ratio is.
         // For references, from 2015 to 2018 around ~500 repos were created, whereas in 2018 alone ~3000 were
         // created as such we're fine if we lose a few repositories but instead improve crawling speed.
-        if entity.created_at.date() <= Utc.ymd(2018, 1, 1) {
+        if entity.created_at.naive_utc().date() <= NaiveDate::from_ymd_opt(2018, 1, 1).unwrap() {
             return Ok(());
         }
 
@@ -280,25 +298,25 @@ impl GithubCrawler {
 
     fn search_solidity_repositories_starting_from(
         &self,
-        mut from: Date<Utc>,
+        mut from: NaiveDate,
         query_by_created: bool,
     ) -> Result<Vec<GithubRepository>, Error> {
         let mut repositories = Vec::new();
 
-        let to = Utc::now().date();
+        let to = Utc::now().date_naive();
         while from <= to {
             match query_by_created {
                 true => repositories.append(&mut self.ghc.search().solidity_repos_created_at(from)?),
                 false => repositories.append(&mut self.ghc.search().solidity_repos_updated_at(from)?),
             }
 
-            from = from + chrono::Duration::days(1);
+            from = from + chrono::Duration::try_days(1).unwrap();
         }
 
         Ok(repositories)
     }
 
-    fn insert_recently_created_solidity_repositories(&self, date: Date<Utc>) -> Result<(), Error> {
+    fn insert_recently_created_solidity_repositories(&self, date: NaiveDate) -> Result<(), Error> {
         let repos = self.search_solidity_repositories_starting_from(date, true)?;
         debug!("Inserting {} repositories", repos.len());
 
@@ -309,7 +327,7 @@ impl GithubCrawler {
         Ok(())
     }
 
-    fn upsert_recently_updated_solidity_repositories(&self, date: Date<Utc>) -> Result<(), Error> {
+    fn upsert_recently_updated_solidity_repositories(&self, date: NaiveDate) -> Result<(), Error> {
         let repos = self.search_solidity_repositories_starting_from(date, false)?;
         debug!("Upserting {} repos", repos.len());
 

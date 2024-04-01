@@ -127,7 +127,7 @@ impl<'a> GithubRepositoryHandler<'a> {
         github_repository
             .filter(
                 updated_at
-                    .gt(Utc::now() - chrono::Duration::days(days))
+                    .gt(Utc::now() - chrono::Duration::try_days(days).unwrap())
                     .and(solidity_ratio.gt(0.0).or(language.eq("Solidity"))),
             )
             .get_results(self.connection)

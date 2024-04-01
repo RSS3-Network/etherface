@@ -6,8 +6,7 @@ metadata:
     app: etherface
     component: etherface
 spec:
-  replicas: 0
-
+  replicas: 1
   selector:
     matchLabels:
       app: etherface
@@ -27,6 +26,9 @@ spec:
           envFrom:
             - secretRef:
                 name: etherface
+          env:
+            - name: VAULT_ADDR
+              value: "http://vault-ui.guardian.svc.cluster.local:8200"
           resources:
             requests:
               cpu: "100m"

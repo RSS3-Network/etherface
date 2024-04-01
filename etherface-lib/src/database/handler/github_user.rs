@@ -68,16 +68,14 @@ impl<'a> GithubUserHandler<'a> {
 
     pub fn get_solidity_repository_owners_active_in_last_n_days(&self, days: i64) -> Vec<GithubUserDatabase> {
         use crate::database::schema::github_repository;
-
+        use chrono::Duration;
         github_user
             .inner_join(github_repository::table)
             .filter(
                 (github_repository::solidity_ratio.gt(0.0).or(github_repository::language.eq("Solidity")))
-                    .and(
-                        github_repository::is_deleted
-                            .eq(false)
-                            .and(github_repository::updated_at.gt(Utc::now() - chrono::Duration::days(days))),
-                    ),
+                    .and(github_repository::is_deleted.eq(false).and(
+                        github_repository::updated_at.gt(Utc::now() - Duration::try_days(days).unwrap()),
+                    )),
             )
             .select(github_user::all_columns)
             .distinct()

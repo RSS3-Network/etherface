@@ -24,6 +24,7 @@ async fn main() -> std::io::Result<()> {
                 .service(v1::sources_github)
                 .service(v1::sources_etherscan)
                 .service(v1::statistics)
+                .service(v1::healthcheck)
                 .wrap(Cors::permissive())
                 .wrap(Logger::new("(%Ts, %s) %a: %r").log_target("v1::logger")),
         )
