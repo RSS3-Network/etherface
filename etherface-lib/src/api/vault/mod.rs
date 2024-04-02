@@ -65,17 +65,16 @@ impl VaultManager {
         let client =
             VaultClient::new(VaultClientSettingsBuilder::default().address(config.address.clone()).build()?)?;
 
-        let mut manager = VaultManager {
+        let manager = VaultManager {
             client,
             config,
             token: None,
         };
-        manager.auth()?;
+        // manager.auth()?;
 
         Ok(manager)
     }
     // set vault auth method
-    #[tokio::main]
     pub async fn auth(&mut self) -> Result<(), Box<dyn Error>> {
         match self.config.auth.method.as_str() {
             "kubernetes" => {
@@ -116,7 +115,7 @@ impl VaultManager {
     }
 
     pub async fn renew_token(&mut self) -> Result<(), Box<dyn Error>> {
-        self.auth()?;
+        self.auth().await?;
         let endpoint = GithubRequestBuilder::default()
             .mount(self.config.secret.mount.clone())
             .path(self.config.secret.path.clone())
