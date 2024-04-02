@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::{Config, VaultConfig};
 use derive_builder::Builder;
 use rustify_derive::Endpoint;
 use serde::Deserialize;
@@ -52,50 +52,52 @@ struct GithubResponseData {
 
 pub(crate) struct VaultManager {
     client: VaultClient,
+    config: VaultConfig,
     token: Option<GithubResponse>,
-    mount: String,
-    path: String,
-    org_name: String,
 }
 
 impl VaultManager {
     /// Returns a new token manager.
     #[tokio::main]
     pub async fn new() -> Result<Self, Box<dyn Error>> {
-        let vault_config = Config::new()?.vault;
+        let config = Config::new()?.vault;
 
-        let mut client =
-            VaultClient::new(VaultClientSettingsBuilder::default().address(vault_config.address).build()?)?;
+        let client =
+            VaultClient::new(VaultClientSettingsBuilder::default().address(config.address.clone()).build()?)?;
 
-        match vault_config.auth.method.as_str() {
+        let mut manager = VaultManager {
+            client,
+            config,
+            token: None,
+        };
+        manager.auth()?;
+
+        Ok(manager)
+    }
+    // set vault auth method
+    #[tokio::main]
+    pub async fn auth(&mut self) -> Result<(), Box<dyn Error>> {
+        match self.config.auth.method.as_str() {
             "kubernetes" => {
                 let jwt = read_to_string(SERVICE_ACCOUNT_TOKEN_PATH)?;
-                let auth = login(&client, &vault_config.auth.path, &vault_config.auth.role, &jwt).await?;
-                client.set_token(&auth.client_token);
+                let auth = login(&self.client, &self.config.auth.path, &self.config.auth.role, &jwt).await?;
+                self.client.set_token(&auth.client_token);
             }
-            "token" => match vault_config.auth.token {
+            "token" => match &self.config.auth.token {
                 Some(token) => {
-                    client.set_token(token.as_str());
+                    self.client.set_token(token.as_str());
                 }
                 None => {
                     return Err("Token auth method requires a token".into());
                 }
             },
             _ => {
-                return Err(format!("Unsupported auth method: {}", vault_config.auth.method).into());
+                return Err(format!("Unsupported auth method: {}", self.config.auth.method).into());
             }
         }
-
-        let manager = VaultManager {
-            client,
-            mount: vault_config.secret.mount,
-            path: vault_config.secret.path,
-            org_name: vault_config.secret.org_name,
-            token: None,
-        };
-
-        Ok(manager)
+        Ok(())
     }
+
     #[tokio::main]
     pub async fn get_token(&mut self) -> Result<String, Box<dyn Error>> {
         // if token is expired or not exist, renew it
@@ -114,10 +116,11 @@ impl VaultManager {
     }
 
     pub async fn renew_token(&mut self) -> Result<(), Box<dyn Error>> {
+        self.auth()?;
         let endpoint = GithubRequestBuilder::default()
-            .mount(self.mount.clone())
-            .path(self.path.clone())
-            .org_name(self.org_name.clone())
+            .mount(self.config.secret.mount.clone())
+            .path(self.config.secret.path.clone())
+            .org_name(self.config.secret.org_name.clone())
             .build()?;
 
         match api::exec_with_no_result(&self.client, endpoint).await {
