@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - deploy.yaml
+  - hpa.yaml
   - svc.yaml
   - route.yaml
   - cors.yaml
