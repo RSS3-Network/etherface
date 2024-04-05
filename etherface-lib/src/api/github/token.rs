@@ -78,20 +78,6 @@ impl TokenManager {
                 return Ok(());
             }
         }
-
-        self.active = match self.vault_manager.get_token() {
-            Ok(token) => token,
-            Err(e) => {
-                warn!("Failed to get token from vault: {}", e);
-                return Err(Error::VaultConfigError);
-            }
-        };
-
-        Ok(())
-    }
-
-    /// Finds and removes all invalid tokens from the token pool.
-    pub fn cleanup(&mut self) -> Result<(), Error> {
         let token = match self.vault_manager.get_token() {
             Ok(token) => token,
             Err(e) => {
@@ -99,10 +85,15 @@ impl TokenManager {
                 return Err(Error::VaultConfigError);
             }
         };
-        // Replace the activen token in case it _might_ have been removed from the pool
         info!("Replacing active github token {} with {}", self.active, token);
         self.active = token;
+
         Ok(())
+    }
+
+    /// Finds and removes all invalid tokens from the token pool.
+    pub fn cleanup(&mut self) -> Result<(), Error> {
+        self.refresh()
     }
 
     fn execute(&self, token: &str) -> Result<RatelimitObject, Error> {
