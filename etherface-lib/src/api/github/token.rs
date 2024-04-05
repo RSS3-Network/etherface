@@ -85,6 +85,10 @@ impl TokenManager {
                 return Err(Error::VaultConfigError);
             }
         };
+        if token == self.active {
+            info!("All tokens are drained, sleeping for {} minutes", SLEEP_DURATION_TOKENS_DRAINED / 60);
+            std::thread::sleep(std::time::Duration::from_secs(SLEEP_DURATION_TOKENS_DRAINED));
+        }
         info!("Replacing active github token {} with {}", self.active, token);
         self.active = token;
 
